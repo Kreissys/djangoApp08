@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Tienda</title>
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --light-gray: #f8f9fa;
+            --dark-gray: #343a40;
+            --border-color: #dee2e6;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            background-color: var(--light-gray);
+            color: var(--dark-gray);
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        header h1 {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+        }
+        .filters {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+        .filters input, .filters select {
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid var(--border-color);
+            font-size: 1rem;
+            min-width: 250px;
+        }
+        #productos-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+        }
+        .producto-card {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            overflow: hidden;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .producto-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+        .card-content {
+            padding: 20px;
+        }
+        .card-content h2 {
+            margin-top: 0;
+            font-size: 1.25rem;
+            color: var(--dark-gray);
+        }
+        .card-content p {
+            color: #6c757d;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        .price-stock {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border-color);
+        }
+        .price {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        .stock {
+            background-color: #e9ecef;
+            padding: 5px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        #loading, #no-results {
+            text-align: center;
+            width: 100%;
+            grid-column: 1 / -1;
+            padding: 40px;
+            font-size: 1.2rem;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Nuestros Productos</h1>
+        </header>
+
+        <div class="filters">
+            <input type="text" id="searchInput" placeholder="Buscar por nombre o descripción...">
+            <select id="categoryFilter">
+                <option value="">Todas las categorías</option>
+            </select>
+        </div>
+        
+        <div id="productos-container">
+            <p id="loading">Cargando productos...</p>
+        </div>
+        
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://127.0.0.1:8000/api';
+        const searchInput = document.getElementById('searchInput');
+        const categoryFilter = document.getElementById('categoryFilter');
+        const container = document.getElementById('productos-container');
+
+        // Función para cargar las categorías en el dropdown
+        async function loadCategories() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/categorias/`);
+                const categories = await response.json();
+                categories.forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category.id;
+                    option.textContent = category.nombre;
+                    categoryFilter.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error al cargar categorías:', error);
+            }
+        }
+
+        // Función para obtener y mostrar los productos
+        async function fetchProducts() {
+            const searchTerm = searchInput.value;
+            const categoryId = categoryFilter.value;
+            
+            // Construir la URL con los filtros
+            let url = new URL(`${API_BASE_URL}/productos/`);
+            if (searchTerm) url.searchParams.append('search', searchTerm);
+            if (categoryId) url.searchParams.append('categoria', categoryId);
+
+            container.innerHTML = '<p id="loading">Cargando productos...</p>';
+
+            try {
+                const response = await fetch(url);
+                const products = await response.json();
+                
+                container.innerHTML = ''; // Limpiar el contenedor
+
+                if (products.length === 0) {
+                    container.innerHTML = '<p id="no-results">No se encontraron productos con estos filtros.</p>';
+                    return;
+                }
+
+                products.forEach(product => {
+                    const card = document.createElement('div');
+                    card.className = 'producto-card';
+                    card.innerHTML = `
+                        <div class="card-content">
+                            <h2>${product.nombre}</h2>
+                            <p>${product.descripcion || 'Sin descripción disponible.'}</p>
+                            <div class="price-stock">
+                                <span class="price">S/ ${parseFloat(product.precio).toFixed(2)}</span>
+                                <span class="stock">${product.stock} en stock</span>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            } catch (error) {
+                console.error('Error al cargar productos:', error);
+                container.innerHTML = '<p id="no-results">Hubo un error al conectar con la API.</p>';
+            }
+        }
+
+        // Event Listeners para los filtros
+        searchInput.addEventListener('input', fetchProducts);
+        categoryFilter.addEventListener('change', fetchProducts);
+
+        // Carga inicial
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCategories();
+            fetchProducts();
+        });
+    </script>
+</body>
+</html>
