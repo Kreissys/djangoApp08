@@ -1,11 +1,15 @@
+# En: series/urls.py
 from django.urls import path
-
-
-from .serie import views
+from . import views
 
 
 urlpatterns = [
-    path('',views.IndexView.as_view(),name='index'),
-    path('serie',views.SeriesView.as_view(),name='series'),
-    path('serie/<int:serie_id>',views.SerieDetailView.as_view())
+    # Esta ruta será: /api/
+    path('', views.IndexView.as_view(), name='index'), 
+
+    # Esta ruta será: /api/series/
+    path('serie/', views.SeriesView.as_view(), name='serie'), 
+
+    # Esta ruta será: /api/series/1/ (por ejemplo)
+    path('serie/<int:serie_id>/', views.SerieDetailView.as_view())
 ]

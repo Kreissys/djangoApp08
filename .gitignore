@@ -1,0 +1,20 @@
+# Ignorar el entorno virtual (Virtual Environment)
+# ESTA CARPETA TIENE TUS 7000+ ARCHIVOS
+venv/
+
+# Ignorar la base de datos local
+# Tu base de datos está dentro de la carpeta lab08
+lab08/db.sqlite3
+
+# Ignorar los archivos de caché de Python
+__pycache__/
+*.pyc
+
+# Ignorar configuraciones del editor (VS Code)
+.vscode/
+
+# Ignorar archivos de logs
+*.log
+
+# Archivos de entorno (si llegas a usar)
+.env
